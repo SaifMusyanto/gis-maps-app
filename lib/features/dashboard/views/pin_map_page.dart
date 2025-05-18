@@ -8,12 +8,9 @@ class PinMapPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Choropleth Map'),
-      ),
       body: Center(
         child: Text(
-          'Choropleth Map Page',
+          'Choropleth Pin Map',
           style: Theme.of(context).textTheme.headlineLarge,
         ),
       ),

@@ -8,9 +8,6 @@ class ChoroplethMapPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Choropleth Map'),
-      ),
       body: Center(
         child: Text(
           'Choropleth Map Page',

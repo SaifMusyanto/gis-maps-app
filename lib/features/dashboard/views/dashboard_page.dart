@@ -33,32 +33,56 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
-      ),
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.all(12),
-        color: Colors.white,
-        child: ToggleButtons(
-          isSelected: [_selectedIndex == 0, _selectedIndex == 1],
-          onPressed: (index) {
-            _onToggleChanged(index);
-          },
-          borderRadius: BorderRadius.circular(20),
-          selectedColor: Colors.white,
-          fillColor: Colors.blue,
-          children: [
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Icon(Icons.map, size: 24), // Choropleth
+      body: Stack(
+        children: [
+          IndexedStack(
+            index: _selectedIndex,
+            children: _pages,
+          ),
+          Positioned(
+            bottom: 56,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 6,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(2, (index) {
+                    final isSelected = _selectedIndex == index;
+                    return GestureDetector(
+                      onTap: () => _onToggleChanged(index),
+                      child: AnimatedContainer(
+                        duration: Duration(milliseconds: 250),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.blue : Colors.transparent,
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Icon(
+                          index == 0 ? Icons.map : Icons.place,
+                          color: isSelected ? Colors.white : Colors.blue,
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
             ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Icon(Icons.place, size: 24), // Pin map
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

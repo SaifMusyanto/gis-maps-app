@@ -22,11 +22,11 @@ class AppRouter extends RootStackRouter {
             children: [
               CustomRoute<void>(
                   page: ChoroplethMapRoute.page,
-                  path: 'choropleth-map',
+                  path: 'choropleth',
                   transitionsBuilder: TransitionsBuilders.fadeIn),
               CustomRoute<void>(
                 page: PinMapRoute.page,
-                path: 'pin-map',
+                path: 'pin',
                 transitionsBuilder: TransitionsBuilders.fadeIn,
               )
             ]),

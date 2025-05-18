@@ -11,6 +11,22 @@
 part of 'router.dart';
 
 /// generated route for
+/// [ChoroplethMapPage]
+class ChoroplethMapRoute extends PageRouteInfo<void> {
+  const ChoroplethMapRoute({List<PageRouteInfo>? children})
+    : super(ChoroplethMapRoute.name, initialChildren: children);
+
+  static const String name = 'ChoroplethMapRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const ChoroplethMapPage();
+    },
+  );
+}
+
+/// generated route for
 /// [DashboardPage]
 class DashboardRoute extends PageRouteInfo<void> {
   const DashboardRoute({List<PageRouteInfo>? children})
@@ -22,6 +38,22 @@ class DashboardRoute extends PageRouteInfo<void> {
     name,
     builder: (data) {
       return const DashboardPage();
+    },
+  );
+}
+
+/// generated route for
+/// [PinMapPage]
+class PinMapRoute extends PageRouteInfo<void> {
+  const PinMapRoute({List<PageRouteInfo>? children})
+    : super(PinMapRoute.name, initialChildren: children);
+
+  static const String name = 'PinMapRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const PinMapPage();
     },
   );
 }
