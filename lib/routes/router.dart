@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:auto_route/auto_route.dart';
-import 'package:gis_maps_app/features/onboarding/views/onboarding_page.dart';
+import 'package:gis_maps_app/features/dashboard/views/choropleth_map_page.dart';
+import 'package:gis_maps_app/features/dashboard/views/pin_map_page.dart';
 import '../features/pages.dart';
-import '../features/cv/data/models/cv/cv_model.dart';
 
 part 'router.gr.dart';
 
@@ -14,47 +14,21 @@ class AppRouter extends RootStackRouter {
   @override
   List<AutoRoute> get routes => [
         CustomRoute<void>(
-          page: SplashRoute.page,
-          path: '/splash',
-          initial: true,
-          transitionsBuilder: TransitionsBuilders.fadeIn,
-        ),
-        CustomRoute<void>(
-          page: OnboardingRoute.page,
-          path: '/onboarding',
-          transitionsBuilder: TransitionsBuilders.fadeIn,
-        ),
-        CustomRoute<void>(
-          page: DashboardRoute.page,
+            page: DashboardRoute.page,
             path: '/dashboard',
             transitionsBuilder: TransitionsBuilders.fadeIn,
             durationInMilliseconds: 300,
+            initial: true,
             children: [
               CustomRoute<void>(
-                  page: CvRoute.page,
-                  path: 'cv',
+                  page: ChoroplethMapRoute.page,
+                  path: 'choropleth-map',
                   transitionsBuilder: TransitionsBuilders.fadeIn),
               CustomRoute<void>(
-                page: AccountRoute.page,
-                path: 'account',
+                page: PinMapRoute.page,
+                path: 'pin-map',
                 transitionsBuilder: TransitionsBuilders.fadeIn,
               )
-            ]
-          ),  
-        CustomRoute<void>(
-          page: CvUploadRoute.page,
-          path: '/cv-upload',
-          transitionsBuilder: TransitionsBuilders.fadeIn,
-        ),
-        CustomRoute<void>(
-          page: AnalysisResultRoute.page,
-          path: '/analysis_result',
-          transitionsBuilder: TransitionsBuilders.fadeIn,
-        ),
-        CustomRoute<void>(
-          page: AboutAppRoute.page,
-          path: '/about-app',
-          transitionsBuilder: TransitionsBuilders.fadeIn,
-        ),
+            ]),
       ];
 }
