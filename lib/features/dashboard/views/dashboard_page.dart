@@ -64,6 +64,8 @@ class _DashboardPageState extends State<DashboardPage> {
                     return GestureDetector(
                       onTap: () => _onToggleChanged(index),
                       child: AnimatedContainer(
+                        height: 52,
+                        width: MediaQuery.of(context).size.width / 4,
                         duration: Duration(milliseconds: 250),
                         padding:
                             EdgeInsets.symmetric(horizontal: 16, vertical: 10),
