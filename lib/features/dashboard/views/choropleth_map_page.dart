@@ -1,13 +1,14 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_map/flutter_map.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:geojson_vi/geojson_vi.dart';
 import 'package:http/http.dart' as http;
-import 'package:csv/csv.dart';
 import 'dart:convert';
+import 'dart:ui' as ui;
+
+import 'package:sizer/sizer.dart';
 
 @RoutePage()
 class ChoroplethMapPage extends StatefulWidget {
@@ -18,13 +19,17 @@ class ChoroplethMapPage extends StatefulWidget {
 }
 
 class _ChoroplethMapPageState extends State<ChoroplethMapPage> {
-  List<Polygon> _polygons = [];
+  GoogleMapController? _mapController;
+  final Set<Polygon> _polygons = {};
+  final Set<Marker> _markers = {};
   Map<String, double> _districtRatios = {};
   double? _maxRatio;
   double? _minRatio;
   LatLng? _tapPosition;
   String? _selectedDistrict;
   double? _selectedRatio;
+  LatLng _initialPosition = const LatLng(-7.2575, 112.7521);
+  String _coordinatesText = "Lat/Lng: -";
 
   // Mapping between GeoJSON names and CSV names
   final Map<String, String> _nameMapping = {
@@ -60,6 +65,9 @@ class _ChoroplethMapPageState extends State<ChoroplethMapPage> {
     'Wonocolo': 'Wonocolo',
     'Wonokromo': 'Wonokromo',
   };
+
+  // Map to store district boundaries for tap detection
+  final Map<Polygon, Map<String, dynamic>> _polygonInfo = {};
 
   @override
   void initState() {
@@ -146,9 +154,6 @@ Wonokromo,59,155559,2636.59322
       _minRatio = _districtRatios.values.reduce((a, b) => a < b ? a : b);
       print('Min ratio: $_minRatio, Max ratio: $_maxRatio');
     }
-
-    // Load the GeoJSON data after CSV data is loaded
-    await _loadGeoJsonFromUrl();
   }
 
   Future<void> _loadGeoJsonFromUrl() async {
@@ -160,7 +165,8 @@ Wonokromo,59,155559,2636.59322
       if (response.statusCode == 200) {
         final featureCollection =
         GeoJSONFeatureCollection.fromJSON(response.body);
-        final polygons = <Polygon>[];
+        final polygons = <Polygon>{};
+        int polygonId = 0;
 
         for (final feature in featureCollection.features) {
           final geometry = feature?.geometry;
@@ -171,7 +177,6 @@ Wonokromo,59,155559,2636.59322
               '';
 
           // Lookup the CSV name using the mapping
-          // We're looking for exact match now instead of contains
           final csvName = _nameMapping[geoJsonName] ?? '';
 
           // Get the ratio from the CSV data
@@ -187,21 +192,29 @@ Wonokromo,59,155559,2636.59322
                 .map((p) => LatLng(p[1], p[0]))
                 .toList();
 
-            polygons.add(
-              Polygon(
-                points: coords,
-                color: color.withOpacity(0.7),
-                borderColor: Colors.blueAccent,
-                borderStrokeWidth: 1.0,
-                isFilled: true,
-                label: '$csvName\n${ratio > 0 ? ratio.toStringAsFixed(1) : "No data"}',
-                labelStyle: const TextStyle(
-                  fontSize: 10,
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            final polygon = Polygon(
+              polygonId: PolygonId('polygon_$polygonId'),
+              points: coords,
+              fillColor: color.withOpacity(0.7),
+              strokeColor: Colors.blueAccent,
+              strokeWidth: 1,
             );
+
+            polygons.add(polygon);
+
+            // Store district info for this polygon
+            _polygonInfo[polygon] = {
+              'name': csvName,
+              'ratio': ratio,
+            };
+
+            // Add a marker for the polygon center (optional - for labels)
+            if (coords.isNotEmpty) {
+              final center = _calculatePolygonCenter(coords);
+              _addDistrictMarker(center, csvName, ratio, 'marker_$polygonId');
+            }
+
+            polygonId++;
           }
 
           if (geometry is GeoJSONMultiPolygon) {
@@ -209,27 +222,35 @@ Wonokromo,59,155559,2636.59322
               final coords =
               polygon.first.map((p) => LatLng(p[1], p[0])).toList();
 
-              polygons.add(
-                Polygon(
-                  points: coords,
-                  color: color.withOpacity(0.7),
-                  borderColor: Colors.black,
-                  borderStrokeWidth: 1.0,
-                  isFilled: true,
-                  label: '$csvName\n${ratio > 0 ? ratio.toStringAsFixed(1) : "No data"}',
-                  labelStyle: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+              final googlePolygon = Polygon(
+                polygonId: PolygonId('polygon_$polygonId'),
+                points: coords,
+                fillColor: color.withOpacity(0.7),
+                strokeColor: Colors.black,
+                strokeWidth: 1,
               );
+
+              polygons.add(googlePolygon);
+
+              // Store district info for this polygon
+              _polygonInfo[googlePolygon] = {
+                'name': csvName,
+                'ratio': ratio,
+              };
+
+              // Add a marker for the polygon center (optional - for labels)
+              if (coords.isNotEmpty) {
+                final center = _calculatePolygonCenter(coords);
+                _addDistrictMarker(center, csvName, ratio, 'marker_$polygonId');
+              }
+
+              polygonId++;
             }
           }
         }
 
         setState(() {
-          _polygons = polygons;
+          _polygons.addAll(polygons);
         });
       } else {
         print('Failed to load GeoJSON: ${response.statusCode}');
@@ -237,6 +258,42 @@ Wonokromo,59,155559,2636.59322
     } catch (e) {
       print('Error loading GeoJSON: $e');
     }
+  }
+
+  LatLng _calculatePolygonCenter(List<LatLng> points) {
+    double latitude = 0;
+    double longitude = 0;
+
+    for (var point in points) {
+      latitude += point.latitude;
+      longitude += point.longitude;
+    }
+
+    return LatLng(
+        latitude / points.length,
+        longitude / points.length
+    );
+  }
+
+  void _addDistrictMarker(LatLng position, String name, double ratio, String markerId) {
+    if (name.isEmpty) return;
+
+    final infoWindow = InfoWindow(
+      title: name,
+      snippet: ratio > 0 ? 'Penduduk Per Fasilitas: ${ratio.toStringAsFixed(1)}' : 'No data',
+    );
+
+    final marker = Marker(
+      markerId: MarkerId(markerId),
+      position: position,
+      infoWindow: infoWindow,
+      // Make the marker transparent but clickable
+      alpha: 0.0,
+    );
+
+    setState(() {
+      _markers.add(marker);
+    });
   }
 
   Color _getColorForRatio(double ratio) {
@@ -247,92 +304,165 @@ Wonokromo,59,155559,2636.59322
     return Color.lerp(Colors.green, Colors.red, normalized)!;
   }
 
-  LatLng? _currentCenter;
-  String _coordinatesText = "Lat/Lng: -";
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
+
+    // You can customize the map style here
+    _setMapStyle(controller);
+  }
+
+  Future<void> _setMapStyle(GoogleMapController controller) async {
+    // Optional: Load a custom map style
+    try {
+      // You would typically load this from a JSON file
+      const mapStyle = '''
+      [
+        {
+          "featureType": "administrative",
+          "elementType": "geometry",
+          "stylers": [
+            {
+              "visibility": "off"
+            }
+          ]
+        },
+        {
+          "featureType": "poi",
+          "stylers": [
+            {
+              "visibility": "off"
+            }
+          ]
+        }
+      ]
+      ''';
+      await controller.setMapStyle(mapStyle);
+    } catch (e) {
+      print('Error setting map style: $e');
+    }
+  }
+
+  void _onMapTap(LatLng position) {
+    setState(() {
+      _tapPosition = position;
+      _selectedDistrict = '${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}';
+      _selectedRatio = null;
+
+      // In a real app, you would determine which district was tapped
+      // This approach is an approximation since Google Maps doesn't provide built-in
+      // polygon hit testing
+      _checkTappedDistrict(position);
+    });
+
+    // Add a marker at the tapped position
+    _markers.removeWhere((marker) => marker.markerId.value == 'tapped_location');
+    _markers.add(
+      Marker(
+        markerId: const MarkerId('tapped_location'),
+        position: position,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+      ),
+    );
+  }
+
+  void _checkTappedDistrict(LatLng position) {
+    // This is a simplified approach since Google Maps doesn't provide built-in point-in-polygon testing
+    // For a production app, you might want to use a more sophisticated algorithm
+    // or implement server-side geocoding against administrative boundaries
+
+    // For now, we'll just show any InfoWindow that might be close
+    _mapController?.showMarkerInfoWindow(const MarkerId('closest_district'));
+  }
+
+  void _onCameraMove(CameraPosition position) {
+    setState(() {
+      _coordinatesText = "Lat/Lng: ${position.target.latitude.toStringAsFixed(6)}, ${position.target.longitude.toStringAsFixed(6)}";
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          FlutterMap(
-            options: MapOptions(
-              initialCenter: const LatLng(-7.2575, 112.7521),
-              initialZoom: 11.5,
-              onTap: (tapPosition, latLng) {
-                setState(() {
-                  _tapPosition = latLng;
-                  // For demo, we'll just show the coordinates
-                  // In a real app, you would determine which district was tapped
-                  _selectedDistrict =
-                      '${latLng.latitude.toStringAsFixed(6)}, ${latLng.longitude.toStringAsFixed(6)}';
-                  _selectedRatio =
-                      null; // You would calculate this based on the tapped district
-                });
-              },
-              onPositionChanged: (position, hasGesture) {
-                setState(() {
-                  _currentCenter = position.center;
-                  _coordinatesText =
-                      "Lat/Lng: ${_currentCenter!.latitude.toStringAsFixed(6)}, ${_currentCenter!.longitude.toStringAsFixed(6)}";
-                });
-              },
+          GoogleMap(
+            onMapCreated: _onMapCreated,
+            initialCameraPosition: CameraPosition(
+              target: _initialPosition,
+              zoom: 11.5,
             ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              ),
-              if (_polygons.isNotEmpty)
-                PolygonLayer(
-                  polygons: _polygons,
-                ),
-              // Marker for tapped position
-              if (_tapPosition != null)
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: _tapPosition!,
-                      width: 40,
-                      height: 40,
-                      child: const Icon(
-                        Icons.location_pin,
-                        color: Colors.red,
-                        size: 40,
-                      ),
-                    ),
-                  ],
-                ),
-              RichAttributionWidget(
-                attributions: [
-                  TextSourceAttribution(
-                    'Population per Health Facility Ratio',
-                    textStyle: const TextStyle(
-                      backgroundColor: Colors.white,
-                      fontSize: 12,
-                    ),
-                  ),
-                  const TextSourceAttribution(
-                    'Green: Low ratio (better) | Red: High ratio (worse)',
-                    textStyle: TextStyle(
-                      backgroundColor: Colors.white,
-                      fontSize: 12,
-                    ),
+            polygons: _polygons,
+            markers: _markers,
+            onTap: _onMapTap,
+            onCameraMove: _onCameraMove,
+            mapType: MapType.normal,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
+            zoomControlsEnabled: false,
+            mapToolbarEnabled: false,
+          ),
+          // Legend for choropleth colors
+          Positioned(
+            bottom: 88,
+            left: 16,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
-            ],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Rasio Penduduk Per Fasilitas',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Container(
+                        width: 16,
+                        height: 16,
+                        color: Colors.green,
+                      ),
+                      const SizedBox(width: 4),
+                      const Text('Rasio rendah (baik)', style: TextStyle(fontSize: 10)),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Container(
+                        width: 16,
+                        height: 16,
+                        color: Colors.red,
+                      ),
+                      const SizedBox(width: 4),
+                      const Text('Rasio tinggi (buruk)', style: TextStyle(fontSize: 10)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
           // Coordinate display bar
           Positioned(
-            top: 60,
+            top: 48,
             left: 0,
             right: 0,
             child: Center(
               child: Container(
                 height: 52,
                 width: 364,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -363,16 +493,11 @@ Wonokromo,59,155559,2636.59322
                     IconButton(
                       icon: const Icon(IconsaxPlusLinear.copy),
                       onPressed: () {
-                        if (_currentCenter != null) {
-                          final coordinates =
-                              '${_currentCenter!.latitude.toStringAsFixed(6)}, ${_currentCenter!.longitude.toStringAsFixed(6)}';
-                          Clipboard.setData(ClipboardData(text: coordinates));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content:
-                                    Text('Coordinates copied: $coordinates')),
-                          );
-                        }
+                        final coordinates = _coordinatesText.replaceAll('Lat/Lng: ', '');
+                        Clipboard.setData(ClipboardData(text: coordinates));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Coordinates copied: $coordinates')),
+                        );
                       },
                       color: Colors.blue,
                       iconSize: 20,
@@ -383,79 +508,56 @@ Wonokromo,59,155559,2636.59322
             ),
           ),
           // District information card (shown when a district is tapped)
-          // In your Stack widget, replace the existing Positioned widget for the info container with:
-
-          // Replace the existing Positioned widget for the info container with:
-
-          if (_tapPosition != null && _selectedDistrict != null)
-            Positioned(
-              left: 16,
-              right: 16,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  // Calculate position using OverlayEntry approach
-                  final renderBox = context.findRenderObject() as RenderBox?;
-                  if (renderBox == null) return Container();
-
-                  final mapState = MapCamera.maybeOf(context);
-                  if (mapState == null) return Container();
-
-                  final screenPosition = mapState.project(_tapPosition!);
-                  final offset = renderBox.globalToLocal(
-                    Offset(screenPosition.x, screenPosition.y),
-                  );
-
-                  // Position the container below the pin (40px height + 10px padding)
-                  final topPosition = offset.dy + 50;
-                  final maxHeight =
-                      constraints.maxHeight - 200; // Leave some margin
-
-                  return Transform.translate(
-                    offset: Offset(0, topPosition.clamp(0.0, maxHeight)),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.location_pin, color: Colors.red),
-                              const SizedBox(width: 8),
-                              Text(
-                                _selectedDistrict!,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (_selectedRatio != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Text(
-                                'Population per facility: ${_selectedRatio!.toStringAsFixed(1)}',
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
+          // if (_tapPosition != null && _selectedDistrict != null)
+          //   Positioned(
+          //     bottom: 100,
+          //     left: 16,
+          //     right: 16,
+          //     child: Container(
+          //       padding: const EdgeInsets.all(16),
+          //       decoration: BoxDecoration(
+          //         color: Colors.white,
+          //         borderRadius: BorderRadius.circular(12),
+          //         boxShadow: [
+          //           BoxShadow(
+          //             color: Colors.black.withOpacity(0.2),
+          //             blurRadius: 8,
+          //             offset: const Offset(0, 4),
+          //           ),
+          //         ],
+          //       ),
+          //       child: Column(
+          //         crossAxisAlignment: CrossAxisAlignment.start,
+          //         mainAxisSize: MainAxisSize.min,
+          //         children: [
+          //           Row(
+          //             children: [
+          //               const Icon(Icons.location_pin, color: Colors.red),
+          //               const SizedBox(width: 8),
+          //               Expanded(
+          //                 child: Text(
+          //                   _selectedDistrict!,
+          //                   style: const TextStyle(
+          //                     fontSize: 16,
+          //                     fontWeight: FontWeight.bold,
+          //                   ),
+          //                   overflow: TextOverflow.ellipsis,
+          //                 ),
+          //               ),
+          //             ],
+          //           ),
+          //           if (_selectedRatio != null)
+          //             Padding(
+          //               padding: const EdgeInsets.only(top: 8),
+          //               child: Text(
+          //                 'Population per facility: ${_selectedRatio!.toStringAsFixed(1)}',
+          //                 style: const TextStyle(fontSize: 14),
+          //               ),
+          //             ),
+          //         ],
+          //       ),
+          //     ),
+          //   ),
         ],
       ),
     );

@@ -173,13 +173,13 @@ class _PinpointMapPageState extends State<PinpointMapPage> {
                     style: _mapStyle,
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    'Menampilkan ${_markers.length} fasilitas kesehatan di Kota Surabaya',
-                    style: context.textTheme.labelLarge?.copyWith(color: AppColors.grey50),
-                  ),
-                ),
+                // Container(
+                //   padding: const EdgeInsets.all(12),
+                //   child: Text(
+                //     'Menampilkan ${_markers.length} fasilitas kesehatan di Kota Surabaya',
+                //     style: context.textTheme.labelLarge?.copyWith(color: AppColors.grey50),
+                //   ),
+                // ),
               ],
             ),
     );
