@@ -35,30 +35,31 @@ class _CoordinateDetailPageState extends State<CoordinateDetailPage> {
       appBar: AppBar(
         title: Text(widget.location.name),
       ),
-      backgroundColor: Colors.white,
-      body: Stack(
+      body: Column(
         children: [
-          SizedBox(
-            height: 32.h,
-            width: double.infinity,
-            child: GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: LatLng(widget.location.latitude, widget.location.longitude),
-                zoom: 16,
-              ),
-              markers: {
-                Marker(
-                  markerId: MarkerId(widget.location.name),
-                  position: LatLng(widget.location.latitude, widget.location.longitude),
+          Expanded(
+            flex: 1,
+            child: SizedBox(
+              width: double.infinity,
+              child: GoogleMap(
+                initialCameraPosition: CameraPosition(
+                  target: LatLng(widget.location.latitude, widget.location.longitude),
+                  zoom: 16,
                 ),
-              },
-              scrollGesturesEnabled: false,
-              zoomControlsEnabled: false,
-              zoomGesturesEnabled: false,
-              style: _mapStyle,
+                markers: {
+                  Marker(
+                    markerId: MarkerId(widget.location.name),
+                    position: LatLng(widget.location.latitude, widget.location.longitude),
+                  ),
+                },
+                scrollGesturesEnabled: false,
+                zoomControlsEnabled: false,
+                zoomGesturesEnabled: false,
+                style: _mapStyle,
+              ),
             ),
           ),
-          _buildInfoCard(),
+          Expanded(flex: 2, child: _buildInfoCard()),
         ],
       ),
     );
@@ -68,7 +69,6 @@ class _CoordinateDetailPageState extends State<CoordinateDetailPage> {
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
-        height: 60.h,
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
           color: Colors.white,
