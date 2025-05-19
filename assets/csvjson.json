@@ -1,0 +1,188 @@
+[
+  {
+    "district": "Asemrowo",
+    "jumlah_faskes": 3,
+    "penduduk": 47437,
+    "rasio": 15812.33333
+  },
+  {
+    "district": "Benowo",
+    "jumlah_faskes": 17,
+    "penduduk": 71033,
+    "rasio": 4178.411765
+  },
+  {
+    "district": "Bubutan",
+    "jumlah_faskes": 18,
+    "penduduk": 97707,
+    "rasio": 5428.166667
+  },
+  {
+    "district": "Bulak",
+    "jumlah_faskes": 10,
+    "penduduk": 46350,
+    "rasio": 4635
+  },
+  {
+    "district": "Dukuh Pakis",
+    "jumlah_faskes": 46,
+    "penduduk": 59293,
+    "rasio": 1288.978261
+  },
+  {
+    "district": "Gayungan",
+    "jumlah_faskes": 29,
+    "penduduk": 43617,
+    "rasio": 1504.034483
+  },
+  {
+    "district": "Genteng",
+    "jumlah_faskes": 38,
+    "penduduk": 58601,
+    "rasio": 1542.131579
+  },
+  {
+    "district": "Gubeng",
+    "jumlah_faskes": 90,
+    "penduduk": 133900,
+    "rasio": 1487.777778
+  },
+  {
+    "district": "Gunung Anyar",
+    "jumlah_faskes": 24,
+    "penduduk": 60535,
+    "rasio": 2522.291667
+  },
+  {
+    "district": "Jambangan",
+    "jumlah_faskes": 16,
+    "penduduk": 53639,
+    "rasio": 3352.4375
+  },
+  {
+    "district": "Karangpilang",
+    "jumlah_faskes": 17,
+    "penduduk": 74931,
+    "rasio": 4407.705882
+  },
+  {
+    "district": "Kenjeran",
+    "jumlah_faskes": 22,
+    "penduduk": 177561,
+    "rasio": 8070.954545
+  },
+  {
+    "district": "Krembangan",
+    "jumlah_faskes": 22,
+    "penduduk": 114674,
+    "rasio": 5212.454545
+  },
+  {
+    "district": "Lakarsantri",
+    "jumlah_faskes": 30,
+    "penduduk": 63017,
+    "rasio": 2100.566667
+  },
+  {
+    "district": "Mulyorejo",
+    "jumlah_faskes": 74,
+    "penduduk": 86824,
+    "rasio": 1173.297297
+  },
+  {
+    "district": "Pabean Cantian",
+    "jumlah_faskes": 32,
+    "penduduk": 74810,
+    "rasio": 2337.8125
+  },
+  {
+    "district": "Pakal",
+    "jumlah_faskes": 9,
+    "penduduk": 60877,
+    "rasio": 6764.111111
+  },
+  {
+    "district": "Rungkut",
+    "jumlah_faskes": 62,
+    "penduduk": 120067,
+    "rasio": 1936.564516
+  },
+  {
+    "district": "Semampir",
+    "jumlah_faskes": 27,
+    "penduduk": 181226,
+    "rasio": 6712.074074
+  },
+  {
+    "district": "Sukolilo",
+    "jumlah_faskes": 58,
+    "penduduk": 113876,
+    "rasio": 1963.37931
+  },
+  {
+    "district": "Sambikerep",
+    "jumlah_faskes": 30,
+    "penduduk": 66796,
+    "rasio": 2226.533333
+  },
+  {
+    "district": "Sawahan",
+    "jumlah_faskes": 44,
+    "penduduk": 199548,
+    "rasio": 4535.181818
+  },
+  {
+    "district": "Sukomanunggal",
+    "jumlah_faskes": 29,
+    "penduduk": 104271,
+    "rasio": 3595.551724
+  },
+  {
+    "district": "Simokerto",
+    "jumlah_faskes": 21,
+    "penduduk": 92832,
+    "rasio": 4420.571429
+  },
+  {
+    "district": "Tambaksari",
+    "jumlah_faskes": 49,
+    "penduduk": 226136,
+    "rasio": 4615.020408
+  },
+  {
+    "district": "Tandes",
+    "jumlah_faskes": 27,
+    "penduduk": 91784,
+    "rasio": 3399.407407
+  },
+  {
+    "district": "Tegalsari",
+    "jumlah_faskes": 48,
+    "penduduk": 98484,
+    "rasio": 2051.75
+  },
+  {
+    "district": "Tenggilis Mejoyo",
+    "jumlah_faskes": 24,
+    "penduduk": 58695,
+    "rasio": 2445.625
+  },
+  {
+    "district": "Wiyung",
+    "jumlah_faskes": 31,
+    "penduduk": 74224,
+    "rasio": 2394.322581
+  },
+  {
+    "district": "Wonocolo",
+    "jumlah_faskes": 39,
+    "penduduk": 79559,
+    "rasio": 2039.974359
+  },
+  {
+    "district": "Wonokromo",
+    "jumlah_faskes": 59,
+    "penduduk": 155559,
+    "rasio": 2636.59322
+  }
+]
