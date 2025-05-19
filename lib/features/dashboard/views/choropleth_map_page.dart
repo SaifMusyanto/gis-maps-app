@@ -236,8 +236,6 @@ Wonokromo,59,155559,2636.59322
               onTap: (tapPosition, latLng) {
                 setState(() {
                   _tapPosition = latLng;
-                  // For demo, we'll just show the coordinates
-                  // In a real app, you would determine which district was tapped
                   _selectedDistrict =
                       '${latLng.latitude.toStringAsFixed(6)}, ${latLng.longitude.toStringAsFixed(6)}';
                   _selectedRatio =
@@ -356,10 +354,6 @@ Wonokromo,59,155559,2636.59322
               ),
             ),
           ),
-          // District information card (shown when a district is tapped)
-          // In your Stack widget, replace the existing Positioned widget for the info container with:
-
-          // Replace the existing Positioned widget for the info container with:
 
           if (_tapPosition != null && _selectedDistrict != null)
             Positioned(
@@ -367,7 +361,6 @@ Wonokromo,59,155559,2636.59322
               right: 16,
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  // Calculate position using OverlayEntry approach
                   final renderBox = context.findRenderObject() as RenderBox?;
                   if (renderBox == null) return Container();
 
