@@ -22,6 +22,9 @@ class _ChoroplethMapPageState extends State<ChoroplethMapPage> {
   Map<String, double> _districtRatios = {};
   double? _maxRatio;
   double? _minRatio;
+  LatLng? _tapPosition;
+  String? _selectedDistrict;
+  double? _selectedRatio;
 
   // Mapping between GeoJSON names and CSV names
   final Map<String, String> _nameMapping = {
@@ -131,9 +134,6 @@ Wonokromo,59,155559,2636.59322
     try {
       final response = await http.get(Uri.parse(geoJsonUrl));
       if (response.statusCode == 200) {
-        // Print the GeoJSON to inspect its structure
-        print('GeoJSON response: ${response.body}');
-
         final featureCollection =
             GeoJSONFeatureCollection.fromJSON(response.body);
         final polygons = <Polygon>[];
@@ -142,15 +142,10 @@ Wonokromo,59,155559,2636.59322
           final geometry = feature?.geometry;
           final properties = feature?.properties;
 
-          // Print properties to see what's available
-          print('Feature properties: $properties');
-
-          // Try different property names to find the district name
           final geoJsonName = properties?['district']?.toString() ??
               properties?['village']?.toString() ??
               '';
 
-          // Find matching CSV name
           final csvName = _nameMapping.entries
               .firstWhere(
                 (entry) => geoJsonName.contains(entry.key),
@@ -169,7 +164,7 @@ Wonokromo,59,155559,2636.59322
             polygons.add(
               Polygon(
                 points: coords,
-                color: color != null ? color.withOpacity(0.7) : Colors.blue,
+                color: color.withOpacity(0.7),
                 borderColor: Colors.blueAccent,
                 borderStrokeWidth: 1.0,
                 isFilled: true,
@@ -235,37 +230,73 @@ Wonokromo,59,155559,2636.59322
       body: Stack(
         children: [
           FlutterMap(
-              options: MapOptions(
-                initialCenter: LatLng(-7.2575, 112.7521),
-                initialZoom: 11.5,
+            options: MapOptions(
+              initialCenter: const LatLng(-7.2575, 112.7521),
+              initialZoom: 11.5,
+              onTap: (tapPosition, latLng) {
+                setState(() {
+                  _tapPosition = latLng;
+                  // For demo, we'll just show the coordinates
+                  // In a real app, you would determine which district was tapped
+                  _selectedDistrict =
+                      '${latLng.latitude.toStringAsFixed(6)}, ${latLng.longitude.toStringAsFixed(6)}';
+                  _selectedRatio =
+                      null; // You would calculate this based on the tapped district
+                });
+              },
+              onPositionChanged: (position, hasGesture) {
+                setState(() {
+                  _currentCenter = position.center;
+                  _coordinatesText =
+                      "Lat/Lng: ${_currentCenter!.latitude.toStringAsFixed(6)}, ${_currentCenter!.longitude.toStringAsFixed(6)}";
+                });
+              },
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              if (_polygons.isNotEmpty)
+                PolygonLayer(
+                  polygons: _polygons,
                 ),
-                if (_polygons.isNotEmpty)
-                  PolygonLayer(
-                    polygons: _polygons,
-                  ),
-                RichAttributionWidget(
-                  attributions: [
-                    TextSourceAttribution(
-                      'Population per Health Facility Ratio',
-                      textStyle: const TextStyle(
-                        backgroundColor: Colors.white,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const TextSourceAttribution(
-                      'Green: Low ratio (better) | Red: High ratio (worse)',
-                      textStyle: TextStyle(
-                        backgroundColor: Colors.white,
-                        fontSize: 12,
+              // Marker for tapped position
+              if (_tapPosition != null)
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: _tapPosition!,
+                      width: 40,
+                      height: 40,
+                      child: const Icon(
+                        Icons.location_pin,
+                        color: Colors.red,
+                        size: 40,
                       ),
                     ),
                   ],
                 ),
-              ]),
+              RichAttributionWidget(
+                attributions: [
+                  TextSourceAttribution(
+                    'Population per Health Facility Ratio',
+                    textStyle: const TextStyle(
+                      backgroundColor: Colors.white,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const TextSourceAttribution(
+                    'Green: Low ratio (better) | Red: High ratio (worse)',
+                    textStyle: TextStyle(
+                      backgroundColor: Colors.white,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Coordinate display bar
           Positioned(
             top: 60,
             left: 0,
@@ -302,7 +333,7 @@ Wonokromo,59,155559,2636.59322
                         ),
                       ),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     IconButton(
                       icon: const Icon(IconsaxPlusLinear.copy),
                       onPressed: () {
@@ -325,6 +356,80 @@ Wonokromo,59,155559,2636.59322
               ),
             ),
           ),
+          // District information card (shown when a district is tapped)
+          // In your Stack widget, replace the existing Positioned widget for the info container with:
+
+          // Replace the existing Positioned widget for the info container with:
+
+          if (_tapPosition != null && _selectedDistrict != null)
+            Positioned(
+              left: 16,
+              right: 16,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Calculate position using OverlayEntry approach
+                  final renderBox = context.findRenderObject() as RenderBox?;
+                  if (renderBox == null) return Container();
+
+                  final mapState = MapCamera.maybeOf(context);
+                  if (mapState == null) return Container();
+
+                  final screenPosition = mapState.project(_tapPosition!);
+                  final offset = renderBox.globalToLocal(
+                    Offset(screenPosition.x, screenPosition.y),
+                  );
+
+                  // Position the container below the pin (40px height + 10px padding)
+                  final topPosition = offset.dy + 50;
+                  final maxHeight =
+                      constraints.maxHeight - 200; // Leave some margin
+
+                  return Transform.translate(
+                    offset: Offset(0, topPosition.clamp(0.0, maxHeight)),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.location_pin, color: Colors.red),
+                              const SizedBox(width: 8),
+                              Text(
+                                _selectedDistrict!,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (_selectedRatio != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                'Population per facility: ${_selectedRatio!.toStringAsFixed(1)}',
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
         ],
       ),
     );
