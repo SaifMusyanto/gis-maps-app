@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:gis_maps_app/core/app_colors.dart';
 import 'package:gis_maps_app/core/styles.dart';
 import 'package:gis_maps_app/features/dashboard/views/choropleth_map_page.dart';
-import 'package:gis_maps_app/features/dashboard/views/pin_map_page.dart';
 import 'package:gis_maps_app/l10n/l10n.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:gis_maps_app/routes/router.dart';
+
+import '../../pinpoint_map/views/pinpoint_map_page.dart';
 
 @RoutePage()
 class DashboardPage extends StatefulWidget {
@@ -27,7 +28,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   final List<Widget> _pages = [
     ChoroplethMapPage(),
-    PinMapPage(),
+    PinpointMapPage(),
   ];
 
   @override
