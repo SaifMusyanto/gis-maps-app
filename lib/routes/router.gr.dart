@@ -27,6 +27,43 @@ class ChoroplethMapRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [CoordinateDetailPage]
+class CoordinateDetailRoute extends PageRouteInfo<CoordinateDetailRouteArgs> {
+  CoordinateDetailRoute({
+    Key? key,
+    required FaskesModel location,
+    List<PageRouteInfo>? children,
+  }) : super(
+         CoordinateDetailRoute.name,
+         args: CoordinateDetailRouteArgs(key: key, location: location),
+         initialChildren: children,
+       );
+
+  static const String name = 'CoordinateDetailRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<CoordinateDetailRouteArgs>();
+      return CoordinateDetailPage(key: args.key, location: args.location);
+    },
+  );
+}
+
+class CoordinateDetailRouteArgs {
+  const CoordinateDetailRouteArgs({this.key, required this.location});
+
+  final Key? key;
+
+  final FaskesModel location;
+
+  @override
+  String toString() {
+    return 'CoordinateDetailRouteArgs{key: $key, location: $location}';
+  }
+}
+
+/// generated route for
 /// [DashboardPage]
 class DashboardRoute extends PageRouteInfo<void> {
   const DashboardRoute({List<PageRouteInfo>? children})
@@ -43,17 +80,54 @@ class DashboardRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
-/// [PinMapPage]
-class PinMapRoute extends PageRouteInfo<void> {
-  const PinMapRoute({List<PageRouteInfo>? children})
-    : super(PinMapRoute.name, initialChildren: children);
+/// [MapFilterPage]
+class MapFilterRoute extends PageRouteInfo<MapFilterRouteArgs> {
+  MapFilterRoute({
+    Key? key,
+    required List<FaskesModel> locations,
+    List<PageRouteInfo>? children,
+  }) : super(
+         MapFilterRoute.name,
+         args: MapFilterRouteArgs(key: key, locations: locations),
+         initialChildren: children,
+       );
 
-  static const String name = 'PinMapRoute';
+  static const String name = 'MapFilterRoute';
 
   static PageInfo page = PageInfo(
     name,
     builder: (data) {
-      return const PinMapPage();
+      final args = data.argsAs<MapFilterRouteArgs>();
+      return MapFilterPage(key: args.key, locations: args.locations);
+    },
+  );
+}
+
+class MapFilterRouteArgs {
+  const MapFilterRouteArgs({this.key, required this.locations});
+
+  final Key? key;
+
+  final List<FaskesModel> locations;
+
+  @override
+  String toString() {
+    return 'MapFilterRouteArgs{key: $key, locations: $locations}';
+  }
+}
+
+/// generated route for
+/// [PinpointMapPage]
+class PinpointMapRoute extends PageRouteInfo<void> {
+  const PinpointMapRoute({List<PageRouteInfo>? children})
+    : super(PinpointMapRoute.name, initialChildren: children);
+
+  static const String name = 'PinpointMapRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const PinpointMapPage();
     },
   );
 }

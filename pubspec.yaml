@@ -39,6 +39,8 @@ dependencies:
   hive: ^2.2.3
   isar_flutter_libs: ^3.1.0+1
   path_provider: ^2.1.5
+  google_maps_flutter: ^2.12.2
+  csv: ^6.0.0
 
 dev_dependencies:
   flutter_test:

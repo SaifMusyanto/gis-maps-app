@@ -85,7 +85,7 @@ class _CustomDropdownFieldState extends State<CustomDropdownField> {
               style: context.textTheme.labelLarge,
               value: widget.value,
               decoration: InputDecoration(
-                contentPadding: const EdgeInsets.symmetric(vertical: Styles.smPadding, horizontal: Styles.mdPadding),
+                contentPadding: const EdgeInsets.fromLTRB(0, Styles.smPadding, Styles.xsPadding, Styles.smPadding),
                 hintText: widget.hint,
                 hintStyle: Theme.of(context)
                     .textTheme
