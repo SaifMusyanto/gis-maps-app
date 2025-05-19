@@ -109,22 +109,46 @@ Wonocolo,39,79559,2039.974359
 Wonokromo,59,155559,2636.59322
 ''';
 
-    final rows = const CsvToListConverter().convert(csvData);
+    // Manual parsing instead of using CsvToListConverter
+    final lines = csvData.trim().split('\n');
 
-    for (int i = 1; i < rows.length; i++) {
-      final row = rows[i];
+    // Skip header row
+    for (int i = 1; i < lines.length; i++) {
+      final row = lines[i].split(',');
       if (row.length >= 4) {
-        final district = row[0].toString().trim();
-        final ratio =
-            row[3] is double ? row[3] : double.tryParse(row[3].toString()) ?? 0;
+        final district = row[0].trim();
+
+        // Parse the ratio value
+        final ratioStr = row[3].trim();
+        double ratio = 0.0;
+
+        if (ratioStr.isNotEmpty) {
+          try {
+            ratio = double.parse(ratioStr);
+          } catch (e) {
+            print('Failed to parse ratio for $district: $ratioStr - $e');
+          }
+        }
+
+        // Store the ratio in the districtRatios map
         _districtRatios[district] = ratio;
       }
     }
 
+    // Debug output
+    print('Loaded district ratios:');
+    _districtRatios.forEach((district, ratio) {
+      print('$district: $ratio');
+    });
+
     if (_districtRatios.isNotEmpty) {
       _maxRatio = _districtRatios.values.reduce((a, b) => a > b ? a : b);
       _minRatio = _districtRatios.values.reduce((a, b) => a < b ? a : b);
+      print('Min ratio: $_minRatio, Max ratio: $_maxRatio');
     }
+
+    // Load the GeoJSON data after CSV data is loaded
+    await _loadGeoJsonFromUrl();
   }
 
   Future<void> _loadGeoJsonFromUrl() async {
@@ -135,7 +159,7 @@ Wonokromo,59,155559,2636.59322
       final response = await http.get(Uri.parse(geoJsonUrl));
       if (response.statusCode == 200) {
         final featureCollection =
-            GeoJSONFeatureCollection.fromJSON(response.body);
+        GeoJSONFeatureCollection.fromJSON(response.body);
         final polygons = <Polygon>[];
 
         for (final feature in featureCollection.features) {
@@ -146,15 +170,17 @@ Wonokromo,59,155559,2636.59322
               properties?['village']?.toString() ??
               '';
 
-          final csvName = _nameMapping.entries
-              .firstWhere(
-                (entry) => geoJsonName.contains(entry.key),
-                orElse: () => MapEntry('', ''),
-              )
-              .value;
+          // Lookup the CSV name using the mapping
+          // We're looking for exact match now instead of contains
+          final csvName = _nameMapping[geoJsonName] ?? '';
 
-          final ratio = csvName.isNotEmpty ? _districtRatios[csvName] ?? 0 : 0;
-          final color = _getColorForRatio(ratio.toDouble());
+          // Get the ratio from the CSV data
+          final ratio = csvName.isNotEmpty ? _districtRatios[csvName] ?? 0.0 : 0.0;
+
+          // Debug the mapping
+          print('GeoJSON Name: $geoJsonName, CSV Name: $csvName, Ratio: $ratio');
+
+          final color = _getColorForRatio(ratio);
 
           if (geometry is GeoJSONPolygon) {
             final coords = geometry.coordinates.first
@@ -168,7 +194,7 @@ Wonokromo,59,155559,2636.59322
                 borderColor: Colors.blueAccent,
                 borderStrokeWidth: 1.0,
                 isFilled: true,
-                label: '$csvName\n${ratio.toStringAsFixed(1)}',
+                label: '$csvName\n${ratio > 0 ? ratio.toStringAsFixed(1) : "No data"}',
                 labelStyle: const TextStyle(
                   fontSize: 10,
                   color: Colors.black,
@@ -181,7 +207,7 @@ Wonokromo,59,155559,2636.59322
           if (geometry is GeoJSONMultiPolygon) {
             for (final polygon in geometry.coordinates) {
               final coords =
-                  polygon.first.map((p) => LatLng(p[1], p[0])).toList();
+              polygon.first.map((p) => LatLng(p[1], p[0])).toList();
 
               polygons.add(
                 Polygon(
@@ -190,7 +216,7 @@ Wonokromo,59,155559,2636.59322
                   borderColor: Colors.black,
                   borderStrokeWidth: 1.0,
                   isFilled: true,
-                  label: '$csvName\n${ratio.toStringAsFixed(1)}',
+                  label: '$csvName\n${ratio > 0 ? ratio.toStringAsFixed(1) : "No data"}',
                   labelStyle: const TextStyle(
                     fontSize: 10,
                     color: Colors.black,
