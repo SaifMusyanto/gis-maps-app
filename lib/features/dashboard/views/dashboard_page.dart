@@ -41,7 +41,7 @@ class _DashboardPageState extends State<DashboardPage> {
             children: _pages,
           ),
           Positioned(
-            bottom: 56,
+            bottom: 16,
             left: 0,
             right: 0,
             child: Center(
