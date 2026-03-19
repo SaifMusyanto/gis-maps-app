@@ -10,7 +10,7 @@ import '../models/faskes_model.dart';
 @RoutePage()
 class CoordinateDetailPage extends StatefulWidget {
   final FaskesModel location;
-  
+
   const CoordinateDetailPage({super.key, required this.location});
 
   @override
@@ -43,13 +43,15 @@ class _CoordinateDetailPageState extends State<CoordinateDetailPage> {
               width: double.infinity,
               child: GoogleMap(
                 initialCameraPosition: CameraPosition(
-                  target: LatLng(widget.location.latitude, widget.location.longitude),
+                  target: LatLng(
+                      widget.location.latitude, widget.location.longitude),
                   zoom: 16,
                 ),
                 markers: {
                   Marker(
                     markerId: MarkerId(widget.location.name),
-                    position: LatLng(widget.location.latitude, widget.location.longitude),
+                    position: LatLng(
+                        widget.location.latitude, widget.location.longitude),
                   ),
                 },
                 scrollGesturesEnabled: false,
@@ -94,9 +96,10 @@ class _CoordinateDetailPageState extends State<CoordinateDetailPage> {
             const Divider(),
             _buildInfoRow('Penyelenggara', widget.location.provider),
             const Divider(),
-            _buildInfoRow('District', widget.location.district),
+            _buildInfoRow('Kecamatan', widget.location.district),
             const Divider(),
-            _buildInfoRow('Coordinates', '${widget.location.latitude}, ${widget.location.longitude}'),
+            _buildInfoRow('Koordinat',
+                '${widget.location.latitude}, ${widget.location.longitude}'),
           ],
         ),
       ),
@@ -126,4 +129,5 @@ class _CoordinateDetailPageState extends State<CoordinateDetailPage> {
         ],
       ),
     );
-  }}
+  }
+}

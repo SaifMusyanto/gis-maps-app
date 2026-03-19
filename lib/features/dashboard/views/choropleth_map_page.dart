@@ -176,13 +176,10 @@ Wonokromo,59,155559,2636.59322
               properties?['village']?.toString() ??
               '';
 
-          // Lookup the CSV name using the mapping
           final csvName = _nameMapping[geoJsonName] ?? '';
 
-          // Get the ratio from the CSV data
           final ratio = csvName.isNotEmpty ? _districtRatios[csvName] ?? 0.0 : 0.0;
 
-          // Debug the mapping
           print('GeoJSON Name: $geoJsonName, CSV Name: $csvName, Ratio: $ratio');
 
           final color = _getColorForRatio(ratio);
